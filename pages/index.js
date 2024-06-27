@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import {
   ContactShadows,
   Environment,
@@ -14,33 +14,42 @@ gsap.registerPlugin(ScrollTrigger);
 
 const SlippersAnimated = () => {
   const slippersRef = useRef();
+  const [color, setColor] = useState("#ffffff");
 
   useEffect(() => {
     if (slippersRef.current) {
       const element = slippersRef.current;
 
-      ScrollTrigger.create({
-        trigger: "#scroll-container", // Trigger element
-        start: "top top", // Start when the top of the trigger element hits the top of the viewport
-        end: "bottom bottom", // End when the bottom of the trigger element hits the bottom of the viewport
-        scrub: true,
-        markers: true,
-        onUpdate: (self) => {
-          const progress = self.progress;
-          gsap.to(element.rotation, {
-            x: progress * 2 * Math.PI,
-            y: progress * 2 * Math.PI,
-          });
-          gsap.to(element.position, {
-            x: progress * 3,
-            y: progress * 2,
-          });
+      const timeline = gsap.timeline({
+        scrollTrigger: {
+          trigger: "#scroll-container",
+          start: "top top",
+          end: "bottom top",
+          scrub: true,
+          pin: true,
+          // pinSpacing: false,
+          markers: true,
+          onUpdate: (self) => {
+            const progress = self.progress;
+            const newColor = `rgb(${Math.floor(255 * progress)}, 0, ${Math.floor(255 * (1 - progress))})`;
+            setColor(newColor);
+          },
         },
       });
+
+      timeline
+        .to(element.rotation, { x: 0, y: 10, duration: 2 }) // Initial rotation
+        .fromTo(element.position, { x: 0 }, { x: 1, duration: 2 }) // Move from center to right
+        .to(element.rotation, { y: 5, duration: 1 }, "-=1") // Rotate while moving
+        .fromTo(element.position, { x: 1 }, { x: -1, duration: 2 }) // Move from right to left
+        .to(element.rotation, { y: -5, duration: 1 }, "-=1") // Rotate while moving
+        .fromTo(element.position, { x: -1, y: 0 }, { x: 0, y: 0.5, duration: 2 }) // Move to center and up
+        .to(element.rotation, { x: 0.5 * Math.PI, y: 0, duration: 1 }); // Tilt
+
     }
   }, []);
 
-  return <Slippers ref={slippersRef} position={[0, 0.1, 0]} />;
+  return <Slippers ref={slippersRef} color={color} position={[0, 0.1, 0]} />;
 };
 
 const Index = () => {
